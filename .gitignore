@@ -1,0 +1,27 @@
+# ====== Python 常规忽略 ======
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 虚拟环境（如有）
+venv/
+.env/
+
+# ====== 项目中特有的目录 ======
+logs/
+build/
+dist/
+md/
+
+# ====== 其他文件 ======
+FF14_Data_Center_Travel.spec
+FF14_DCT_Config.json
+*.spec
+
+# 备份文件
+*_backup.py
+
+# 操作系统杂项
+.DS_Store
+Thumbs.db
