@@ -88,7 +88,7 @@ class ReturnService:
         
         debug_log(f"选择的订单: {selected_order}")
         
-        # 4. 获取可返回的服务器列表（用于验证和获取完整服务器信息）
+        # 4. 获取可返回的服务器列表
         print("\n[步骤4] 获取可返回的服务器列表...")
         return_areas = self.api.fetch_return_area_list()
         
@@ -96,49 +96,42 @@ class ReturnService:
             show_error_message("未能获取可返回的服务器列表")
             return False
         
-        # 5. 从服务器列表中找到当前所在的服务器（根据订单中的目的地信息）
-        current_server = None
+        # 5. 从服务器列表中找到订单显示的目的地大区
         current_area = None
-        
         for area in return_areas:
             if area.get('areaId') == current_area_id or area.get('areaName') == current_area_name:
                 current_area = area
-                for server in area.get('groups', []):
-                    if server.get('groupId') == current_server_id or server.get('groupName') == current_server_name:
-                        current_server = server
-                        break
                 break
         
-        # 如果找不到精确匹配，让用户手动选择服务器
-        if not current_server:
-            print(f"\n[信息] 订单显示当前位置: {current_area_name} - {current_server_name}")
-            print("[信息] 需要确认当前所在的服务器...")
-            
-            # 找到对应大区
-            if current_area:
-                current_servers = current_area.get('groups', [])
-            else:
-                # 让用户选择大区
-                current_area = show_area_selection(return_areas, "\n请选择当前所在的大区：")
-                if not current_area:
-                    return None
-                current_servers = current_area.get('groups', [])
-            
-            if not current_servers:
-                show_error_message(f"{current_area['areaName']} 没有可选的服务器")
-                return False
-            
-            current_server = show_server_selection(
-                current_servers,
-                current_area['areaName'],
-                f"\n请选择当前所在的服务器（{current_area['areaName']}）："
-            )
-            if not current_server:
-                return None
-        else:
-            print(f"\n[信息] 当前位置: {current_area['areaName']} - {current_server['groupName']}")
+        if not current_area:
+            print(f"\n[警告] 未在服务器列表中找到大区: {current_area_name}")
+            show_error_message("无法匹配订单中的目的地大区，请联系管理员")
+            return False
         
-        # 6. 显示确认信息
+        # 6. 让用户确认当前所在的服务器（使用订单的目的地服务器作为默认值）
+        print(f"\n[步骤5] 确认当前位置")
+        print(f"[信息] 订单显示您超域传送的目的地大区是: {current_area_name}")
+        
+        current_servers = current_area.get('groups', [])
+        if not current_servers:
+            show_error_message(f"{current_area['areaName']} 没有可选的服务器")
+            return False
+        
+        # 导入带默认值的服务器选择函数
+        from .ui import show_server_selection_with_default
+        
+        current_server = show_server_selection_with_default(
+            current_servers,
+            current_area['areaName'],
+            current_server_name
+        )
+        
+        if not current_server:
+            return None
+        
+        print(f"\n[确认] 当前位置: {current_area['areaName']} - {current_server['groupName']}")
+        
+        # 7. 显示确认信息
         print("\n" + "="*50)
         print("         超域返回确认信息")
         print("="*50)
@@ -152,8 +145,8 @@ class ReturnService:
             show_info_message("操作已取消")
             return None
         
-        # 7. 执行返回操作（支持自动重试）
-        print("\n[步骤5] 开始执行超域返回...")
+        # 8. 执行返回操作（支持自动重试）
+        print("\n[步骤6] 开始执行超域返回...")
         success = self._run_return_loop(
             order_id=order_id,
             role_name=role_name,
@@ -251,6 +244,9 @@ class ReturnService:
                     print("[错误] 无效的选项，请重新输入")
             except ValueError:
                 print("[错误] 请输入有效的数字")
+            except KeyboardInterrupt:
+                print("\n[中断] 用户取消选择")
+                return None
     
     def _run_return_loop(self, order_id, role_name, current_area, current_server, 
                          home_area_name, home_server_name):
@@ -313,7 +309,7 @@ class ReturnService:
                     # 记录遥测统计
                     telemetry.record_return()
                     
-                    # 显示操作后广告
+                    # 显示操作后赞助内容
                     print_after_action_ads()
                     
                     return True

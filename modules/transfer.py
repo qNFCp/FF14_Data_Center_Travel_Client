@@ -242,7 +242,7 @@ class TransferService:
             # 等待随机间隔后重试
             wait_sec = random.randint(61, 65)
             print()
-            print(f"[等待] 等待 {wait_sec} 秒后进行下一次尝试...")
+            debug_log(f"[DEBUG] 等待 {wait_sec} 秒后进行下一次尝试...")
             print("[提示] 按 Ctrl+C 可以中断程序")
             
             try:

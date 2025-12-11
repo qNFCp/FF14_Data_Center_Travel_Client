@@ -51,7 +51,8 @@ class BrowserManager:
         while True:
             selection = self._prompt_browser_choice(browsers)
             if selection is None:
-                break
+                # 用户取消选择，直接返回False不打开浏览器
+                return False
             name, init_func = selection
             try:
                 print(f"[信息] 正在启动 {name} 浏览器...")
@@ -70,8 +71,6 @@ class BrowserManager:
                 self.driver = None
                 print("[提示] 请重新选择其他浏览器")
         
-        print("[提示] 未选择受控浏览器，将使用系统默认浏览器")
-        webbrowser.open(FF14_LOGIN_URL)
         return False
     
     def _prompt_browser_choice(self, browsers):
@@ -92,8 +91,9 @@ class BrowserManager:
             prompt += ": "
             try:
                 choice = input(prompt).strip()
-            except EOFError:
-                choice = ''
+            except (EOFError, KeyboardInterrupt):
+                print("\n[中断] 用户取消选择")
+                return None
             
             if choice == '' and default_available:
                 idx = browser_names.index(default_available)
@@ -227,30 +227,40 @@ class BrowserManager:
             return
         
         try:
-            # 首先尝试关闭可能存在的模态框/遮罩层
-            try:
-                modal_close_selectors = [
-                    ".modal-backdrop",
-                    ".ant-modal-close",
-                    ".close-button",
-                    "//div[contains(@class, 'modal-backdrop')]",
-                ]
-                for selector in modal_close_selectors:
-                    try:
-                        if selector.startswith("//"):
-                            element = self.driver.find_element(By.XPATH, selector)
-                        else:
-                            element = self.driver.find_element(By.CSS_SELECTOR, selector)
-                        self.driver.execute_script("arguments[0].click();", element)
-                        debug_log(f"关闭了遮罩层: {selector}")
-                        time.sleep(1)
-                        break
-                    except:
-                        continue
-            except Exception as e:
-                debug_log(f"尝试关闭遮罩层时: {e}")
+            # 首先检查是否存在遮罩层
+            has_modal = False
+            modal_check_selectors = [
+                ".modal-backdrop",
+                ".ant-modal-mask",
+                ".ant-modal-wrap",
+                "//div[contains(@class, 'modal-backdrop')]",
+                "//div[contains(@class, 'ant-modal-mask')]",
+            ]
             
-            # 尝试查找登录按钮
+            for selector in modal_check_selectors:
+                try:
+                    if selector.startswith("//"):
+                        element = self.driver.find_element(By.XPATH, selector)
+                    else:
+                        element = self.driver.find_element(By.CSS_SELECTOR, selector)
+                    
+                    # 检查元素是否可见
+                    if element.is_displayed():
+                        has_modal = True
+                        debug_log(f"检测到遮罩层: {selector}")
+                        break
+                except NoSuchElementException:
+                    continue
+                except Exception as e:
+                    debug_log(f"检查遮罩层时出错 ({selector}): {e}")
+                    continue
+            
+            if has_modal:
+                debug_log("[DEBUG] 检测到页面遮罩层，跳过自动点击登录按钮")
+                return
+            
+            # 未检测到遮罩层，尝试查找并点击登录按钮
+            debug_log("未检测到遮罩层，尝试自动点击登录按钮")
             login_button_selectors = [
                 "//button[contains(@class, 'ant-btn') and contains(@class, 'blueButton')]//span[contains(text(), '登')]/..",
                 "//button[contains(text(), '登')]",

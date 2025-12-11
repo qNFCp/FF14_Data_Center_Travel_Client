@@ -114,8 +114,10 @@ class VersionClient(BackendClient):
             data = result.get('data', {})
             latest_version = data.get('version', VERSION)
             is_force_update = bool(data.get('is_force_update', 0))
+            download_url = data.get('download_url', '')
             
             debug_log(f"服务端最新版本: {latest_version}, 强制更新: {is_force_update}")
+            debug_log(f"下载地址: {download_url if download_url else '(未设置)'}")
             
             is_latest = self._compare_version(VERSION, latest_version) >= 0
             # 如果不是最新版本且需要强制更新，则不受支持
@@ -129,7 +131,7 @@ class VersionClient(BackendClient):
                 'latest_version': latest_version,
                 'is_force_update': is_force_update,
                 'is_supported': is_supported,
-                'update_url': data.get('download_url', ''),
+                'update_url': download_url,
                 'changelog': data.get('release_notes', ''),
                 'release_date': data.get('created_at', '')
             }

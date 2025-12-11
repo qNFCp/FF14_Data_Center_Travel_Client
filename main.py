@@ -8,7 +8,7 @@ FF14 跨数据中心旅行工具 (Data Center Travel)
 - 返回母区
 - 遥测统计
 - 版本检查
-- 广告展示
+- 赞助内容展示
 - 传送历史记录
 """
 
@@ -36,15 +36,24 @@ class FF14DCTApp:
         self.browser = None
         self.api_client = None
         self._interrupted = False
+        self._interrupt_count = 0
         
         # 设置信号处理
         signal.signal(signal.SIGINT, self._signal_handler)
     
     def _signal_handler(self, signum, frame):
         """处理Ctrl+C信号"""
-        print()
-        print("[中断] 检测到 Ctrl+C，正在安全退出...")
-        self._interrupted = True
+        self._interrupt_count += 1
+        
+        if self._interrupt_count == 1:
+            print()
+            print("[中断] 检测到 Ctrl+C，正在安全退出...")
+            print("[提示] 再次按 Ctrl+C 将强制退出")
+            self._interrupted = True
+        else:
+            print()
+            print("[强制退出] 检测到第二次 Ctrl+C，立即退出")
+            sys.exit(1)
     
     def check_version(self):
         """
@@ -67,6 +76,7 @@ class FF14DCTApp:
         debug_log(f"  是否最新: {version_info['is_latest']}")
         debug_log(f"  强制更新: {version_info['is_force_update']}")
         debug_log(f"  版本受支持: {version_info['is_supported']}")
+        debug_log(f"  更新地址: {version_info.get('update_url', '(无)')}")
         
         if not version_info['is_supported']:
             # 版本过旧，阻止运行
@@ -89,8 +99,14 @@ class FF14DCTApp:
         
         self.browser = BrowserManager(self.config)
         
+        if self._interrupted:
+            return False
+        
         if not self.browser.init_browser():
             show_error_message("浏览器初始化失败")
+            return False
+        
+        if self._interrupted:
             return False
         
         print("[步骤2] 打开登录页面...")
@@ -98,16 +114,21 @@ class FF14DCTApp:
             show_error_message("无法打开登录页面")
             return False
         
-        print("[步骤3] 等待用户登录...")
+        if self._interrupted:
+            return False
+        
+        print("[步骤3] 等待用户登录后返回...")
         print("-" * 40)
-        print("[提示] 请在浏览器中完成登录操作")
+        print("[提示] 请在弹出的浏览器中完成登录操作，之后返回本程序窗口，按回车继续下一步操作。")
         print("[提示] 登录完成后按回车键继续...")
         print("-" * 40)
         
         try:
             input()
-        except EOFError:
-            pass
+        except (EOFError, KeyboardInterrupt):
+            print("\n[中断] 用户取消操作")
+            self._interrupted = True
+            return False
         
         if self._interrupted:
             return False

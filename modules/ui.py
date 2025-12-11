@@ -13,7 +13,8 @@ from .logger import get_last_transfer_from_history
 def print_header():
     """打印程序头部信息"""
     print("\n" + "="*60)
-    print(f"       FF14 超域传送工具 v{VERSION}")
+    print(f"             FF14 超域传送工具 v{VERSION}\n\n")
+    print("(本工具是开源免费工具, 如果你是购买获得本程序的, 那你应该被骗啦!)")
     if DEBUG_MODE:
         print("           [开发模式]")
     print("="*60)
@@ -25,7 +26,7 @@ def print_separator(char="-", length=50):
 
 
 def print_after_action_ads():
-    """打印操作完成后的广告"""
+    """打印操作完成后的赞助内容"""
     try:
         ads = ads_client.get_after_action_ads()
         if ads:
@@ -44,7 +45,7 @@ def print_after_action_ads():
                     print(f"     🔗 {link}")
             print("*"*50)
     except Exception as e:
-        pass  # 广告获取失败不影响程序运行
+        pass  # 赞助内容获取失败不影响程序运行
 
 
 def show_main_menu(config_manager):
@@ -65,7 +66,11 @@ def show_main_menu(config_manager):
             print(f"\n  💡 上次传送目标: {area} - {server}")
     
     print()
-    return input("请输入选项 (0/1/2): ").strip()
+    try:
+        return input("请输入选项 (0/1/2): ").strip()
+    except KeyboardInterrupt:
+        print("\n[中断] 用户取消操作")
+        return '0'
 
 
 def show_area_selection(areas, prompt="请选择大区："):
@@ -86,6 +91,9 @@ def show_area_selection(areas, prompt="请选择大区："):
             print("[错误] 无效的选项，请重新输入")
         except ValueError:
             print("[错误] 请输入数字")
+        except KeyboardInterrupt:
+            print("\n[中断] 用户取消选择")
+            return None
 
 
 def show_server_selection(servers, area_name, prompt=None):
@@ -109,6 +117,59 @@ def show_server_selection(servers, area_name, prompt=None):
             print("[错误] 无效的选项，请重新输入")
         except ValueError:
             print("[错误] 请输入数字")
+        except KeyboardInterrupt:
+            print("\n[中断] 用户取消选择")
+            return None
+
+
+def show_server_selection_with_default(servers, area_name, default_server_name, prompt=None):
+    """显示服务器选择（带默认值）"""
+    if prompt is None:
+        prompt = f"请确认您当前所在的服务器（{area_name}）："
+    
+    # 找到默认服务器的索引
+    default_idx = None
+    for i, server in enumerate(servers):
+        if server['groupName'] == default_server_name:
+            default_idx = i
+            break
+    
+    print(f"\n{prompt}")
+    print(f"\n[说明] 订单显示您的目的地是 [{default_server_name}]")
+    print("[提示] 如果您在大区内又跨服到其他服务器，请选择实际所在服务器")
+    print()
+    
+    for i, server in enumerate(servers, 1):
+        server_name = server['groupName']
+        default_marker = " (默认)" if server_name == default_server_name else ""
+        print(f"  [{i}] {server_name}{default_marker}")
+    print("  [0] 返回")
+    
+    while True:
+        try:
+            prompt_text = "\n请输入选项"
+            if default_idx is not None:
+                prompt_text += f" (回车确认 [{default_server_name}])"
+            prompt_text += ": "
+            
+            choice = input(prompt_text).strip()
+            
+            # 如果用户直接回车且有默认值，返回默认服务器
+            if choice == '' and default_idx is not None:
+                return servers[default_idx]
+            
+            if choice == '0':
+                return None
+            
+            idx = int(choice) - 1
+            if 0 <= idx < len(servers):
+                return servers[idx]
+            print("[错误] 无效的选项，请重新输入")
+        except ValueError:
+            print("[错误] 请输入数字")
+        except KeyboardInterrupt:
+            print("\n[中断] 用户取消选择")
+            return None
 
 
 def show_role_selection(roles, server_name):
@@ -134,13 +195,20 @@ def show_role_selection(roles, server_name):
             print("[错误] 无效的选项，请重新输入")
         except ValueError:
             print("[错误] 请输入数字")
+        except KeyboardInterrupt:
+            print("\n[中断] 用户取消选择")
+            return None
 
 
 def confirm_action(message):
     """确认操作"""
     print(f"\n{message}")
-    choice = input("确认开始传送? (y/n): ").strip().lower()
-    return choice == 'y'
+    try:
+        choice = input("确认开始传送? (y/n): ").strip().lower()
+        return choice == 'y'
+    except KeyboardInterrupt:
+        print("\n[中断] 用户取消操作")
+        return False
 
 
 def show_transfer_summary(role_name, source_area, source_server, target_area, target_server):
@@ -165,8 +233,11 @@ def show_version_update_notice(version_info):
         for line in version_info['changelog'].split('\n')[:5]:
             print(f"    {line}")
     
-    if version_info.get('update_url'):
-        print(f"\n  下载地址: {version_info['update_url']}")
+    update_url = version_info.get('update_url', '').strip()
+    if update_url:
+        print(f"\n  下载地址: {update_url}")
+    else:
+        print(f"\n  下载地址: (暂未设置)")
     
     print("!"*60)
 
@@ -206,4 +277,8 @@ def show_warning_message(message):
 
 def wait_for_enter(prompt="按回车键继续..."):
     """等待用户按回车"""
-    input(f"\n{prompt}")
+    try:
+        input(f"\n{prompt}")
+    except (KeyboardInterrupt, EOFError):
+        print("\n[中断] 用户取消操作")
+        pass
