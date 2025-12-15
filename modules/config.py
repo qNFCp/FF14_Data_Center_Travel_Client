@@ -10,7 +10,7 @@ import json
 from datetime import datetime
 
 # ==================== 版本信息 ====================
-VERSION = "0.1.0"
+VERSION = "0.1.1"
 APP_NAME = "FF14 超域传送工具"
 
 # ==================== 运行配置 ====================
