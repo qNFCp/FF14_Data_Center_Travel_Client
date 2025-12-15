@@ -16,7 +16,7 @@ APP_NAME = "FF14 超域传送工具"
 
 # ==================== 运行配置 ====================
 # 运行模式: True=开发模式(输出详细调试信息并输出日志文件), False=发行模式
-DEBUG_MODE = True
+DEBUG_MODE = False
 
 # ==================== 后端API配置 ====================
 BACKEND_BASE_URL = "https://ff14dct.233.be/main.php"
