@@ -192,7 +192,7 @@ class TransferService:
                         # 记录遥测统计
                         telemetry.record_transfer()
                         
-                        # 显示操作后广告
+                        # 显示操作后赞助信息
                         print_after_action_ads()
                         
                         return True
@@ -230,7 +230,7 @@ class TransferService:
                     # 记录遥测统计
                     telemetry.record_transfer()
                     
-                    # 显示操作后广告
+                    # 显示操作后赞助信息
                     print_after_action_ads()
                     
                     return True

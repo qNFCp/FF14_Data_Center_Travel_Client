@@ -33,6 +33,10 @@ class BrowserManager:
         self.driver = None
         self.config = config_manager or ConfigManager()
         self.default_browser = self.config.get_browser()
+        
+        # 记录代理设置（如果启用）
+        if USE_HTTP_PROXY and HTTP_PROXY:
+            debug_log(f"浏览器将使用HTTP代理: {HTTP_PROXY}")
     
     def init_browser(self):
         """初始化浏览器，询问用户选择"""

@@ -7,6 +7,7 @@ FF14DCT 配置管理模块
 
 import os
 import json
+import winreg
 from datetime import datetime
 
 # ==================== 版本信息 ====================
@@ -42,9 +43,89 @@ FF14_API_MIGRATION_ORDERS = f"{FF14_BASE_URL}/api/orderserivce/queryMigrationOrd
 # ==================== HTTP配置 ====================
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
 
-# HTTP代理配置
+# HTTP代理配置（初始值，将被自动检测覆盖）
 USE_HTTP_PROXY = False
-HTTP_PROXY = "http://127.0.0.1:7890"
+HTTP_PROXY = None
+
+
+def detect_system_proxy():
+    """
+    检测系统HTTP代理设置
+    优先级：环境变量 > Windows注册表
+    返回: (use_proxy: bool, proxy_url: str or None)
+    """
+    # 1. 检查环境变量
+    env_proxy = os.environ.get('HTTP_PROXY') or os.environ.get('http_proxy') or \
+                os.environ.get('HTTPS_PROXY') or os.environ.get('https_proxy')
+    
+    if env_proxy:
+        if DEBUG_MODE:
+            print(f"[DEBUG] 检测到环境变量代理: {env_proxy}")
+        return True, env_proxy
+    
+    # 2. 检查Windows注册表（仅Windows系统）
+    try:
+        import platform
+        if platform.system() == 'Windows':
+            # 访问Internet Settings注册表项
+            key = winreg.OpenKey(
+                winreg.HKEY_CURRENT_USER,
+                r"Software\Microsoft\Windows\CurrentVersion\Internet Settings",
+                0,
+                winreg.KEY_READ
+            )
+            
+            # 检查是否启用代理
+            try:
+                proxy_enable, _ = winreg.QueryValueEx(key, "ProxyEnable")
+            except FileNotFoundError:
+                proxy_enable = 0
+            
+            # 如果启用了代理，获取代理服务器地址
+            if proxy_enable:
+                try:
+                    proxy_server, _ = winreg.QueryValueEx(key, "ProxyServer")
+                    winreg.CloseKey(key)
+                    
+                    # 处理代理服务器地址格式
+                    # 可能的格式: "127.0.0.1:7890" 或 "http=127.0.0.1:7890;https=127.0.0.1:7890"
+                    if '=' in proxy_server:
+                        # 多协议代理，提取http代理
+                        for part in proxy_server.split(';'):
+                            if part.startswith('http='):
+                                proxy_server = part.split('=', 1)[1]
+                                break
+                            elif part.startswith('https='):
+                                proxy_server = part.split('=', 1)[1]
+                                break
+                    
+                    # 确保代理地址有协议前缀
+                    if not proxy_server.startswith('http://') and not proxy_server.startswith('https://'):
+                        proxy_server = f"http://{proxy_server}"
+                    
+                    if DEBUG_MODE:
+                        print(f"[DEBUG] 检测到Windows系统代理: {proxy_server}")
+                    
+                    return True, proxy_server
+                except FileNotFoundError:
+                    pass
+                finally:
+                    try:
+                        winreg.CloseKey(key)
+                    except:
+                        pass
+    except ImportError:
+        # 非Windows系统，winreg不可用
+        pass
+    except Exception as e:
+        if DEBUG_MODE:
+            print(f"[DEBUG] 检测Windows代理失败: {e}")
+    
+    return False, None
+
+
+# 初始化时自动检测代理
+USE_HTTP_PROXY, HTTP_PROXY = detect_system_proxy()
 
 # ==================== 文件路径 ====================
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -82,6 +163,11 @@ class ConfigManager:
     def _save_config(self):
         """保存配置文件"""
         try:
+            # 确保配置文件所在目录存在
+            config_dir = os.path.dirname(self.config_path)
+            if config_dir and not os.path.exists(config_dir):
+                os.makedirs(config_dir, exist_ok=True)
+            
             with open(self.config_path, 'w', encoding='utf-8') as f:
                 json.dump(self.config, f, ensure_ascii=False, indent=2)
             return True

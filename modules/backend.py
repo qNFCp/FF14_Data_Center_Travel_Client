@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 FF14DCT 后端API模块
-负责与后端服务器通信（遥测统计、版本检查、广告获取）
+负责与后端服务器通信（遥测统计、版本检查、赞助信息获取）
 """
 
 import requests
@@ -163,18 +163,18 @@ class VersionClient(BackendClient):
 
 
 class AdsClient(BackendClient):
-    """广告客户端"""
+    """赞助信息客户端"""
     
     def get_ads(self, ad_type=None):
         """
-        获取广告列表
+        获取赞助信息列表
         ad_type: 'bottom' | 'after_action' | None (获取所有)
         
         后端返回格式:
         [
             {
                 "type_code": "bottom",
-                "type_name": "底部固定广告",
+                "type_name": "底部固定赞助信息",
                 "ads": [{...}, {...}]
             },
             ...
@@ -188,35 +188,35 @@ class AdsClient(BackendClient):
             result = self._make_request('GET', '/api/ads', params)
             
             if not result or not result.get('success'):
-                debug_log(f"获取广告失败: {result}")
+                debug_log(f"获取赞助信息失败: {result}")
                 return []
             
             # 后端返回按类型分组的数组
             data = result.get('data', [])
             
-            # 如果指定了类型，只返回该类型的广告
+            # 如果指定了类型，只返回该类型的赞助信息
             if ad_type and data:
                 for group in data:
                     if group.get('type_code') == ad_type:
                         ads = group.get('ads', [])
-                        debug_log(f"获取到 {len(ads)} 条 {ad_type} 广告")
+                        debug_log(f"获取到 {len(ads)} 条 {ad_type} 赞助信息")
                         return ads
                 return []
             
-            # 否则返回所有广告（合并所有类型）
+            # 否则返回所有赞助信息（合并所有类型）
             all_ads = []
             for group in data:
                 all_ads.extend(group.get('ads', []))
             
-            debug_log(f"获取到 {len(all_ads)} 条广告")
+            debug_log(f"获取到 {len(all_ads)} 条赞助信息")
             return all_ads
             
         except Exception as e:
-            debug_log(f"获取广告异常: {e}")
+            debug_log(f"获取赞助信息异常: {e}")
             return []
     
     def get_after_action_ads(self):
-        """获取操作后广告"""
+        """获取操作后赞助信息"""
         return self.get_ads(ad_type='after_action')
 
 

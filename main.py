@@ -27,6 +27,9 @@ from modules import (
     wait_for_enter
 )
 
+# 导入代理配置用于显示信息
+from modules.config import USE_HTTP_PROXY, HTTP_PROXY
+
 
 class FF14DCTApp:
     """FF14 跨数据中心旅行工具主应用"""
@@ -198,6 +201,14 @@ class FF14DCTApp:
             
             # 显示程序头部
             print_header()
+            
+            # 显示代理配置信息
+            if USE_HTTP_PROXY and HTTP_PROXY:
+                print(f"[信息] 检测到系统HTTP代理: {HTTP_PROXY}")
+                debug_log(f"HTTP代理已启用: {HTTP_PROXY}")
+            else:
+                print("[信息] 未检测到系统HTTP代理，将直接连接")
+                debug_log("未使用HTTP代理")
             
             # 记录应用启动遥测
             telemetry.record_app_start()
