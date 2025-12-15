@@ -14,6 +14,7 @@ from .backend import telemetry, version_client, ads_client
 from .browser import BrowserManager
 from .transfer import TransferService
 from .return_home import ReturnService
+from .credential import credential_manager
 from .ui import (
     print_header, print_after_action_ads,
     show_main_menu, show_version_update_notice, show_version_blocked_notice,
@@ -38,6 +39,7 @@ __all__ = [
     'BrowserManager',
     'TransferService',
     'ReturnService',
+    'credential_manager',
     'print_header',
     'print_after_action_ads',
     'show_main_menu',

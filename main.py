@@ -21,6 +21,7 @@ from modules import (
     debug_log, init_log_file, FF14APIClient,
     telemetry, version_client,
     BrowserManager, TransferService, ReturnService,
+    credential_manager,
     print_header, show_main_menu,
     show_version_update_notice, show_version_blocked_notice,
     show_success_message, show_error_message, show_info_message,
@@ -96,6 +97,39 @@ class FF14DCTApp:
         
         return True
     
+    def try_cached_login(self):
+        """
+        尝试使用缓存的Cookies登录
+        返回: True=缓存登录成功, False=需要重新登录
+        """
+        print("\n[信息] 检查缓存的登录凭据...")
+        
+        # 尝试从密钥环加载Cookies
+        cached_cookies = credential_manager.load_cookies()
+        
+        if not cached_cookies:
+            print("[信息] 未找到缓存的登录凭据")
+            return False
+        
+        print(f"[信息] 找到缓存的登录凭据，正在验证...")
+        debug_log(f"加载了 {len(cached_cookies)} 个缓存Cookie")
+        
+        # 创建临时API客户端测试Cookies有效性
+        test_client = FF14APIClient()
+        test_client.set_cookies(cached_cookies)
+        
+        # 使用获取区服列表接口测试Cookies是否有效
+        if test_client.fetch_area_list():
+            print("[成功] 缓存的登录凭据有效，跳过浏览器登录")
+            # 使用验证过的客户端
+            self.api_client = test_client
+            return True
+        else:
+            print("[信息] 缓存的登录凭据已失效，需要重新登录")
+            # 删除失效的Cookies
+            credential_manager.delete_cookies()
+            return False
+    
     def init_browser_and_login(self):
         """初始化浏览器并等待用户登录"""
         print("\n[步骤1] 初始化浏览器...")
@@ -149,6 +183,10 @@ class FF14DCTApp:
         # 初始化API客户端并设置Cookie
         self.api_client = FF14APIClient()
         self.api_client.set_cookies(cookies)
+        
+        # 保存Cookies到系统密钥环
+        if credential_manager.save_cookies(cookies):
+            print("[信息] 登录凭据已保存，下次启动可自动登录")
         
         return True
     
@@ -222,18 +260,27 @@ class FF14DCTApp:
             if self._interrupted:
                 return
             
-            # 初始化浏览器并登录
-            if not self.init_browser_and_login():
-                wait_for_enter("按回车键退出...")
-                return
+            # 尝试使用缓存的Cookies登录
+            cached_login_success = self.try_cached_login()
             
             if self._interrupted:
                 return
             
-            # 获取游戏数据
-            if not self.fetch_game_data():
-                wait_for_enter("按回车键退出...")
-                return
+            if not cached_login_success:
+                # 缓存登录失败，需要浏览器登录
+                if not self.init_browser_and_login():
+                    wait_for_enter("按回车键退出...")
+                    return
+                
+                if self._interrupted:
+                    return
+                
+                # 获取游戏数据（浏览器登录后需要获取）
+                if not self.fetch_game_data():
+                    wait_for_enter("按回车键退出...")
+                    return
+            
+            # 注意：缓存登录成功时，fetch_area_list已在try_cached_login中调用成功
             
             if self._interrupted:
                 return

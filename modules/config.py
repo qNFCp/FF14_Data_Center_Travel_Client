@@ -11,12 +11,12 @@ import winreg
 from datetime import datetime
 
 # ==================== 版本信息 ====================
-VERSION = "0.1.1"
+VERSION = "0.1.2"
 APP_NAME = "FF14 超域传送工具"
 
 # ==================== 运行配置 ====================
 # 运行模式: True=开发模式(输出详细调试信息并输出日志文件), False=发行模式
-DEBUG_MODE = False
+DEBUG_MODE = True
 
 # ==================== 后端API配置 ====================
 BACKEND_BASE_URL = "https://ff14dct.233.be/main.php"
