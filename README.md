@@ -1,3 +1,15 @@
+## （Personal Update 1/16/2026）一键版下载
+
+👉 可以直接下载图形版本进行便捷操作：
+
+🔗 最新 Release 下载：
+https://github.com/ZoeyW061/FF14_Data_Center_Travel_Client_GUI/releases
+
+下载后双击 exe 即可使用。
+
+
+
+
 # FF14 DCT
 FF14国服超域传送及超域返回工具
 
