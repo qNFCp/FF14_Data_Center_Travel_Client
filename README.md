@@ -1,17 +1,9 @@
-## （Personal Update 1/16/2026）一键版下载
-
-👉 可以直接下载图形版本进行便捷操作：
-
-🔗 最新 Release 下载：
-https://github.com/ZoeyW061/FF14_Data_Center_Travel_Client_GUI/releases
-
-下载后双击 exe 即可使用。
-
-
-
-
 # FF14 DCT
 FF14国服超域传送及超域返回工具
+
+## 下载
+主版本：https://github.com/qNFCp/FF14_Data_Center_Travel_Client/releases
+GUI版本(实验性)：https://github.com/ZoeyW061/FF14_Data_Center_Travel_Client_GUI/releases
 
 ## 名词
 FF14： 最终幻想14
@@ -49,3 +41,6 @@ FF14： 最终幻想14
 
 ## License
 This project is licensed under the Apache-2.0 License - see the [LICENSE](LICENSE.txt) file for details
+
+## 贡献者致谢
+[ZoeyW061](https://github.com/ZoeyW061)
