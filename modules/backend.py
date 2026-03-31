@@ -216,8 +216,12 @@ class AdsClient(BackendClient):
             return []
     
     def get_after_action_ads(self):
-        """获取操作后赞助信息"""
+        """获取操作后公告信息"""
         return self.get_ads(ad_type='after_action')
+
+    def get_bottom_ads(self):
+        """获取底部公告信息"""
+        return self.get_ads(ad_type='bottom')
 
 
 # 创建单例实例

@@ -76,6 +76,42 @@ class BrowserManager:
                 print("[提示] 请重新选择其他浏览器")
         
         return False
+
+    def init_browser_with_choice(self, browser_name):
+        """按指定名称初始化浏览器（供 GUI 使用）。"""
+        if not SELENIUM_AVAILABLE:
+            print("[提示] 未安装selenium，无法通过GUI流程获取Cookie")
+            return False
+
+        browser_map = {
+            'edge': ('Edge', self._init_edge),
+            'chrome': ('Chrome', self._init_chrome),
+            'firefox': ('Firefox', self._init_firefox),
+        }
+
+        key = (browser_name or '').strip().lower()
+        if key not in browser_map:
+            print(f"[错误] 不支持的浏览器选项: {browser_name}")
+            return False
+
+        name, init_func = browser_map[key]
+        print(f"[信息] 正在启动 {name} 浏览器...")
+        try:
+            if init_func():
+                print(f"[成功] {name} 浏览器启动成功")
+                self._save_default_browser(name)
+                return True
+            return False
+        except Exception as e:
+            debug_log(f"{name} 启动失败详情: {e}")
+            print(f"[警告] {name} 启动失败: {str(e)[:80]}")
+            try:
+                if self.driver:
+                    self.driver.quit()
+            except Exception:
+                pass
+            self.driver = None
+            return False
     
     def _prompt_browser_choice(self, browsers):
         """询问用户选择浏览器，支持默认值"""
