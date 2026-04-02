@@ -138,5 +138,11 @@ class TransferOrchestrator:
             success=True,
             order_id=order_id,
         )
-        self.config.set_last_transfer(target_area_name, target_server_name)
+        self.config.set_last_transfer(
+            target_area_name,
+            target_server_name,
+            role_name=role_name,
+            source_area_name=source_area_name,
+            source_server_name=source_server_name,
+        )
         telemetry.record_transfer()

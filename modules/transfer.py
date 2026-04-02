@@ -186,7 +186,10 @@ class TransferService:
                         # 保存上次传送目标
                         self.config.set_last_transfer(
                             target_area['areaName'],
-                            target_server['groupName']
+                            target_server['groupName'],
+                            role_name=role_name,
+                            source_area_name=source_area['areaName'],
+                            source_server_name=source_server['groupName'],
                         )
                         
                         # 记录遥测统计
@@ -224,7 +227,10 @@ class TransferService:
                     # 保存上次传送目标
                     self.config.set_last_transfer(
                         target_area['areaName'],
-                        target_server['groupName']
+                        target_server['groupName'],
+                        role_name=role_name,
+                        source_area_name=source_area['areaName'],
+                        source_server_name=source_server['groupName'],
                     )
                     
                     # 记录遥测统计

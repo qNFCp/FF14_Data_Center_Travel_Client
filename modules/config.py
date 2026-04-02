@@ -11,7 +11,7 @@ import winreg
 from datetime import datetime
 
 # ==================== 版本信息 ====================
-VERSION = "0.1.2"
+VERSION = "0.2.0"
 APP_NAME = "FF14 超域传送工具"
 
 # ==================== 运行配置 ====================
@@ -197,13 +197,27 @@ class ConfigManager:
         """获取上次传送记录"""
         return self.get("last_transfer")
     
-    def set_last_transfer(self, area_name, server_name):
+    def set_last_transfer(
+        self,
+        area_name,
+        server_name,
+        role_name=None,
+        source_area_name=None,
+        source_server_name=None,
+    ):
         """
         设置上次传送记录
+
+        area_name/server_name 仍保留为目标区服，兼容旧版本读取逻辑。
         """
         transfer_info = {
             "area": area_name,
             "server": server_name,
+            "target_area": area_name,
+            "target_server": server_name,
+            "role_name": role_name or "",
+            "source_area": source_area_name or "",
+            "source_server": source_server_name or "",
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
         return self.set("last_transfer", transfer_info)

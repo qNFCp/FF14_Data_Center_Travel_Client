@@ -141,32 +141,36 @@ class ReturnOrchestrator:
         """轮询订单状态，确认返回成功。"""
         for attempt in range(1, max_attempts + 1):
             log_cb(f"返回状态轮询 {attempt}/{max_attempts}…")
-            orders_data = self.api.fetch_migration_orders()
-            if not orders_data:
-                if attempt < max_attempts:
-                    sleep_cb(interval)
-                continue
+            try:
+                orders_data = self.api.fetch_migration_orders()
+                if not orders_data:
+                    log_cb("轮询时获取订单列表失败，继续重试。")
+                    if attempt < max_attempts:
+                        sleep_cb(interval)
+                    continue
 
-            order_list = orders_data.get("orderlist", [])
+                order_list = orders_data.get("orderlist", [])
 
-            for order in order_list:
-                order_id = order.get("orderId", "")
-                migration_type = order.get("migrationType", -1)
-                status_desc = order.get("migrationStatusDesc", "")
-                if migration_type == 5 and (order_id == return_order_id or order_id == travel_order_id):
-                    if "返回成功" in status_desc:
-                        return True
-                    if "失败" in status_desc:
-                        return False
+                for order in order_list:
+                    order_id = order.get("orderId", "")
+                    migration_type = order.get("migrationType", -1)
+                    status_desc = order.get("migrationStatusDesc", "")
+                    if migration_type == 5 and (order_id == return_order_id or order_id == travel_order_id):
+                        if "返回成功" in status_desc:
+                            return True
+                        if "失败" in status_desc:
+                            return False
 
-            for order in order_list:
-                order_id = order.get("orderId", "")
-                migration_type = order.get("migrationType", -1)
-                status_desc = order.get("migrationStatusDesc", "")
-                travel_status = order.get("travelStatus", -1)
-                if order_id == travel_order_id and migration_type == 4:
-                    if "旅行结束" in status_desc or travel_status == 3:
-                        return True
+                for order in order_list:
+                    order_id = order.get("orderId", "")
+                    migration_type = order.get("migrationType", -1)
+                    status_desc = order.get("migrationStatusDesc", "")
+                    travel_status = order.get("travelStatus", -1)
+                    if order_id == travel_order_id and migration_type == 4:
+                        if "旅行结束" in status_desc or travel_status == 3:
+                            return True
+            except Exception as e:
+                log_cb(f"轮询订单状态异常: {e}")
 
             if attempt < max_attempts:
                 sleep_cb(interval)
