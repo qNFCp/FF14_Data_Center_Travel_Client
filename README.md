@@ -2,8 +2,7 @@
 FF14国服超域传送及超域返回工具
 
 ## 下载
-主版本：https://github.com/qNFCp/FF14_Data_Center_Travel_Client/releases
-GUI版本(实验性)：https://github.com/ZoeyW061/FF14_Data_Center_Travel_Client_GUI/releases
+https://github.com/qNFCp/FF14_Data_Center_Travel_Client/releases
 
 ## 名词
 FF14： 最终幻想14
